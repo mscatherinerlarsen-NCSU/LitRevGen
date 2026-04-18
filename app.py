@@ -40,7 +40,7 @@ if st.button("Generate Literature Review"):
         st.warning("Please upload at least one document.")
     elif len(uploaded_files) > 10:
         st.warning("Please upload a maximum of 10 documents.")
-       else:
+    else:
         with st.spinner("Reading documents and synthesizing literature... This may take a minute."):
             # 1. Extract text
             source_material = extract_text_from_pdfs(uploaded_files)
