@@ -1,0 +1,1 @@
+This is a vibecoding project for a graduate level course on responsible AI useand society. It is a simple academic tool which generates a basic literature review from 10 uploaded sources and the user input research question.
