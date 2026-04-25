@@ -16,6 +16,23 @@ st.write("Upload up to 10 source documents, and AI will synthesize them into a l
 # --- User Inputs ---
 field_of_study = st.text_input("Field of Study", placeholder="e.g., Psychology, Computer Science")
 research_question = st.text_area("Research Question", placeholder="e.g., How does remote work impact employee mental health?")
+
+# --- Citation Selection and Warning ---
+citation_styles = [
+    "APA 7", 
+    "MLA", 
+    "Chicago Style footnotes", 
+    "Chicago Style endnotes", 
+    "Harvard", 
+    "IEEE", 
+    "AMA", 
+    "Bluebook"
+]
+citation_style = st.selectbox("Select Citation Style", citation_styles)
+
+# Added warning about PDF metadata and citations
+st.info("⚠️ **Note:** Always verify the generated citations and bibliography. PDFs often lack clean metadata, so the AI may struggle to find complete author names, publication dates, or journal titles from the raw text.")
+
 uploaded_files = st.file_uploader("Upload Source Documents (PDFs)", type=["pdf"], accept_multiple_files=True)
 
 # --- Helper Function to Extract Text ---
@@ -45,7 +62,7 @@ if st.button("Generate Literature Review"):
             # 1. Extract text
             source_material = extract_text_from_pdfs(uploaded_files)
             
-            # 2. Build the Prompt
+            # 2. Build the Prompt 
             prompt = f"""
             You are an expert academic writer and researcher in the field of {field_of_study}.
             I have provided the text from several source documents below. 
@@ -53,13 +70,17 @@ if st.button("Generate Literature Review"):
             Based ONLY on these provided sources, write a comprehensive, cohesive literature review 
             answering this research question: "{research_question}"
             
+            CRITICAL INSTRUCTIONS FOR CITATIONS AND BIBLIOGRAPHY:
+            - Use **{citation_style}** format for all in-text citations.
+            - Create a complete bibliography/reference list at the end of the review formatted strictly in **{citation_style}**.
+            - Extract author names, publication years, titles, and other relevant metadata from the provided source texts to build these citations. If exact metadata is missing, format the available information (like the file name provided in the text markers) as closely as possible to the {citation_style} guidelines.
+            
             Structure the review with:
             - An introduction to the topic and research question.
             - A thematic synthesis grouping the authors' findings and arguments.
             - Identification of any agreements, disagreements, or gaps in the provided texts.
             - A brief conclusion.
-            
-            Cite the sources in the text using the file names provided.
+            - A formatted Bibliography/Reference list.
             
             SOURCE TEXTS:
             {source_material}
@@ -68,7 +89,7 @@ if st.button("Generate Literature Review"):
             # 3. Call the AI
             try:
                 # Using Gemini 1.5 Flash as it is fast and has a massive context window for reading PDFs
-                model = genai.GenerativeModel('gemini-2.5-flash')
+                model = genai.GenerativeModel('gemini-1.5-flash')
                 response = model.generate_content(prompt)
                 
                 # 4. Display the Result
@@ -83,4 +104,5 @@ if st.button("Generate Literature Review"):
                     mime="text/plain"
                 )
             except Exception as e:
+                st.error(f"An error occurred while communicating with the AI: {e}")
                 st.error(f"An error occurred while communicating with the AI: {e}")
