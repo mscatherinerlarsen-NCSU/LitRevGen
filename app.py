@@ -1,13 +1,13 @@
 import streamlit as st
 import PyPDF2
-import google.generativeai as genai
+from google import genai  # <-- UPDATED: New SDK import
 import os
 
 # --- Configuration ---
-# Pulls the API key from Streamlit Cloud Secrets
+# Pulls the API key from Streamlit Cloud Secrets and initializes the new Client
 try:
     API_KEY = st.secrets["GEMINI_API_KEY"] 
-    genai.configure(api_key=API_KEY)
+    client = genai.Client(api_key=API_KEY) # <-- UPDATED: New Client syntax
 except KeyError:
     st.error("API Key not found. Please add GEMINI_API_KEY to your Streamlit Secrets.")
     st.stop()
@@ -93,9 +93,11 @@ if st.button("Generate Literature Review"):
             
             # 3. Call the AI
             try:
-                # Updated to the '-latest' alias to help prevent 404 errors
-                model = genai.GenerativeModel('gemini-1.5-flash-latest')
-                response = model.generate_content(prompt)
+                # <-- UPDATED: New generation syntax pointing to the current 2.5 Flash model
+                response = client.models.generate_content(
+                    model='gemini-2.5-flash',
+                    contents=prompt
+                )
                 
                 # 4. Display the Result
                 st.subheader("Your Synthesized Literature Review")
@@ -109,4 +111,4 @@ if st.button("Generate Literature Review"):
                     mime="text/plain"
                 )
             except Exception as e:
-                st.error(f"An error occurred while communicating with the AI: {e}\n\n*Tip: If you see a 404 error, ensure your google-generativeai package is fully updated in your requirements.txt file.*")
+                st.error(f"An error occurred while communicating with the AI: {e}")
