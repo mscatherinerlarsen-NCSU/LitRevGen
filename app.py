@@ -4,9 +4,13 @@ import google.generativeai as genai
 import os
 
 # --- Configuration ---
-# You will need to put your actual API key here or in an environment variable.
-API_KEY = st.secrets["GEMINI_API_KEY"] 
-genai.configure(api_key=API_KEY)
+# Pulls the API key from Streamlit Cloud Secrets
+try:
+    API_KEY = st.secrets["GEMINI_API_KEY"] 
+    genai.configure(api_key=API_KEY)
+except KeyError:
+    st.error("API Key not found. Please add GEMINI_API_KEY to your Streamlit Secrets.")
+    st.stop()
 
 # --- App UI Setup ---
 st.set_page_config(page_title="Literature Review Synthesizer", page_icon="📚")
@@ -30,7 +34,6 @@ citation_styles = [
 ]
 citation_style = st.selectbox("Select Citation Style", citation_styles)
 
-# Added warning about PDF metadata and citations
 st.info("⚠️ **Note:** Always verify the generated citations and bibliography. PDFs often lack clean metadata, so the AI may struggle to find complete author names, publication dates, or journal titles from the raw text.")
 
 uploaded_files = st.file_uploader("Upload Source Documents (PDFs)", type=["pdf"], accept_multiple_files=True)
@@ -43,8 +46,10 @@ def extract_text_from_pdfs(files):
             reader = PyPDF2.PdfReader(file)
             text = ""
             for page in reader.pages:
-                text += page.extract_text() + "\n"
-            combined_text += f"\n\n--- SOURCE {i+1}: {file.name} ---\n{text[:15000]}" # Limiting chars per doc to avoid token limits
+                if page.extract_text():
+                    text += page.extract_text() + "\n"
+            # Limiting chars per doc to avoid token limits
+            combined_text += f"\n\n--- SOURCE {i+1}: {file.name} ---\n{text[:15000]}" 
         except Exception as e:
             st.error(f"Error reading {file.name}: {e}")
     return combined_text
@@ -88,8 +93,8 @@ if st.button("Generate Literature Review"):
             
             # 3. Call the AI
             try:
-                # Using Gemini 1.5 Flash as it is fast and has a massive context window for reading PDFs
-                model = genai.GenerativeModel('gemini-1.5-flash')
+                # Updated to the '-latest' alias to help prevent 404 errors
+                model = genai.GenerativeModel('gemini-1.5-flash-latest')
                 response = model.generate_content(prompt)
                 
                 # 4. Display the Result
@@ -104,5 +109,4 @@ if st.button("Generate Literature Review"):
                     mime="text/plain"
                 )
             except Exception as e:
-                st.error(f"An error occurred while communicating with the AI: {e}")
-                st.error(f"An error occurred while communicating with the AI: {e}")
+                st.error(f"An error occurred while communicating with the AI: {e}\n\n*Tip: If you see a 404 error, ensure your google-generativeai package is fully updated in your requirements.txt file.*")
